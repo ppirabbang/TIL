@@ -10,10 +10,10 @@ struct Princess{
 }Goryeo[2];
 
 int main(){
-  Princess jungmyung;
-  jungmyung.name = "정명공주";
-  jungmyung.father = "조선 선조";
-  jungmyung.birthday = "1603년 6월 27일";
+  Princess jungmyung1;
+  jungmyung1.name = "정명공주";
+  jungmyung1.father = "조선 선조";
+  jungmyung1.birthday = "1603년 6월 27일";
 
   Goryeo[0].name = "선정왕후";
   Goryeo[0].father = "고려 성종";
@@ -21,9 +21,9 @@ int main(){
   Goryeo[1].father = "고려 현종";
 
   cout << " == 조선 공주 ==" << endl;
-  cout << jungmyung.name << endl;
-  cout << jungmyung.father << endl;
-  cout << jungmyung.birthday << endl;
+  cout << jungmyung1.name << endl;
+  cout << jungmyung1.father << endl;
+  cout << jungmyung1.birthday << endl;
   cout << " == 고려 공주 ==" << endl;
   cout << Goryeo[0].name << endl;
   cout << Goryeo[0].father << endl;
