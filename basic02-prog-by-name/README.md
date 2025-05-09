@@ -74,4 +74,16 @@ sudo ./xdp_loader --dev veth-basic02 --progname xdp_abort_func
 
 과제 2는 xdp_prog_kern.c 에 
 ```
-SEC(
+SEC("xdp")
+int  xdp_pass_func(struct xdp_md *ctx)
+{
+	return XDP_PASS;
+}
+```
+와 같이 
+SEC("xdp");
+int xdp_abort_func(struct xdp_md *ctx)
+{
+  return XDP_ABORT;
+}
+로 수정해서 해당 옵션 수행해주면 된다. 그러면 패킷을 버리는 것과 기능은 같지만 패킷을 추적할 수 있다.
