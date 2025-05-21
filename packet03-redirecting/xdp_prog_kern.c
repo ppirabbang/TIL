@@ -36,16 +36,28 @@ static __always_inline void swap_src_dst_mac(struct ethhdr *eth)
 {
 	/* Assignment 1: swap source and destination addresses in the eth.
 	 * For simplicity you can use the memcpy macro defined above */
+	unsigned char tmp[ETH_ALEN];
+	memcpy(tmp, eth->h_dest, sizeof(eth->h_dest));
+	memcpy(eth->h_dest, eth->h_source, sizeof(eth->h_dest));
+	memcpy(eth->h_source, tmp, sizeof(eth->h_dest));
 }
 
 static __always_inline void swap_src_dst_ipv6(struct ipv6hdr *ipv6)
 {
 	/* Assignment 1: swap source and destination addresses in the iphv6dr */
+	struct in6_addr tmp;
+	memcpy(&tmp, &ipv6->daddr, sizeof(struct in6_addr));
+	memcpy(&ipv6->daddr, &ipv6->saddr, sizeof(struct in6_addr));
+	memcpy(&ipv6->saddr, &tmp, sizeof(struct in6_addr));
 }
 
 static __always_inline void swap_src_dst_ipv4(struct iphdr *iphdr)
 {
 	/* Assignment 1: swap source and destination addresses in the iphdr */
+	__be32 tmp;
+	memcpy(&tmp, &iphdr->daddr, sizeof(iphdr->daddr));
+	memcpy(&iphdr->daddr, &iphdr->saddr, sizeof(iphdr->daddr));
+	memcpy(&iphdr->saddr, &tmp, sizeof(iphdr->daddr));
 }
 
 /* Implement packet03/assignment-1 in this section */
@@ -107,6 +119,17 @@ int xdp_icmp_echo_func(struct xdp_md *ctx)
 
 	/* Assignment 1: patch the packet and update the checksum. You can use
 	 * the echo_reply variable defined above to fix the ICMP Type field. */
+	struct icmphdr_common before = *icmphdr;
+	icmphdr->type = echo_reply;
+	__u32 size = sizeof(struct icmphdr);
+	if((void *)icmphdr + 32 > data_end){
+		goto out;
+	}
+
+	__u32 sum = bpf_csum_diff((__be32 *)&before, size, (__be32 *)icmphdr, size, 0);
+	sum = (sum & 0xffff) + (sum >> 16);
+	__u16 new_checksum = ~sum;
+	icmphdr -> cksum = new_checksum;
 
 	bpf_printk("echo_reply: %d", echo_reply);
 
@@ -127,7 +150,9 @@ int xdp_redirect_func(struct xdp_md *ctx)
 	int eth_type;
 	int action = XDP_PASS;
 	/* unsigned char dst[ETH_ALEN] = {} */	/* Assignment 2: fill in with the MAC address of the left inner interface */
+	unsigned char dst[ETH_ALEN] = {0x56, 0x78, 0x59, 0x76, 0xf0, 0x33};
 	/* unsigned ifindex = 0; */		/* Assignment 2: fill in with the ifindex of the left interface */
+	unsigned int ifindex = 5;
 
 	/* These keep track of the next header type and iterator pointer */
 	nh.pos = data;
@@ -139,6 +164,8 @@ int xdp_redirect_func(struct xdp_md *ctx)
 
 	/* Assignment 2: set a proper destination address and call the
 	 * bpf_redirect() with proper parameters, action = bpf_redirect(...) */
+	memcpy(eth->h_dest, dst, ETH_ALEN);
+	action = bpf_redirect(ifindex, 0);
 
 out:
 	return xdp_stats_record_action(ctx, action);
